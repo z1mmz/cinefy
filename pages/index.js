@@ -7,8 +7,10 @@ import { useRef,useState } from 'react'
 
 export default function Home() {
   const img1 = useRef()
+  const canvas0 = useRef()
   const canvas1 = useRef()
   const [cv ,setCV] = useState()
+  const [progress ,setProgress] = useState(0)
 
   const loadImg = () => {
     console.log("yay")
@@ -60,30 +62,33 @@ export default function Home() {
     let ksize = new cv.Size(0, 0);
     cv.cvtColor(mat,overLay, cv.COLOR_RGBA2GRAY);
     cv.threshold(overLay,overLay,220,255,cv.THRESH_BINARY);
-    cv.GaussianBlur(overLay,overLay,ksize,10,10,cv.BORDER_DEFAULT)
+    cv.GaussianBlur(overLay,overLay,ksize,50,50,cv.BORDER_DEFAULT)
+  
+    cv.threshold(overLay,overLay,10,255,cv.THRESH_BINARY);
+    cv.GaussianBlur(overLay,overLay,ksize,20,20,cv.BORDER_DEFAULT)
+  
     cv.cvtColor(overLay,overLay,cv.COLOR_GRAY2RGBA)
-    let bgrPlanes = new cv.MatVector();
-    console.log(overLay.data)
     let row = 0 , col = 0
     console.log(overLay.channels())
     for(let r = 0 ; r < overLay.rows; r++){
       console.log(r - overLay.rows)
+      setProgress(r/overLay.rows)
       for(let c = 0; c< overLay.cols; c++){
         row = r, col = c;
         
-        if (overLay.isContinuous()) {
-            overLay.data[row * overLay.cols * overLay.channels() + col * overLay.channels()] = overLay.data[row * overLay.cols * overLay.channels() + col * overLay.channels()]*2;
-            overLay.data[row * overLay.cols * overLay.channels() + col * overLay.channels() +1 ] = overLay.data[row * overLay.cols * overLay.channels() + col * overLay.channels()+1]*0.2;
-            overLay.data[row * overLay.cols * overLay.channels() + col * overLay.channels() +2 ] = overLay.data[row * overLay.cols * overLay.channels() + col * overLay.channels()+2]*0.2;
-            overLay.data[row * overLay.cols * overLay.channels() + col * overLay.channels() +3 ] = overLay.data[row * overLay.cols * overLay.channels() + col * overLay.channels()+3]*0.5;
+        if (overLay.isContinuous() ) {
+            overLay.data[row * overLay.cols * overLay.channels() + col * overLay.channels()] = overLay.data[row * overLay.cols * overLay.channels() + col * overLay.channels()]*1;
+            overLay.data[row * overLay.cols * overLay.channels() + col * overLay.channels() +1 ] = overLay.data[row * overLay.cols * overLay.channels() + col * overLay.channels()+1]*0.1;
+            overLay.data[row * overLay.cols * overLay.channels() + col * overLay.channels() +2 ] = overLay.data[row * overLay.cols * overLay.channels() + col * overLay.channels()+2]*0.1;
+            // overLay.data[row * overLay.cols * overLay.channels() + col * overLay.channels() +3 ] = overLay.data[row * overLay.cols * overLay.channels() + col * overLay.channels()+3]*0.5;
             // overLay.data[row * overLay.cols * overLay.channels() + col * overLay.channels() +4 ] = overLay.data[row * overLay.cols * overLay.channels() + col * overLay.channels()+4]*0;
         }
     }
+
   }
-    cv.split(overLay, bgrPlanes);
-    let r = bgrPlanes.get(2)
-    console.log(r)
-    cv.addWeighted(mat, 1, overLay, 0.5, .5, overLay);
+
+    // cv.imshow(canvas0.current, overLay);    
+    cv.addWeighted(mat, 1, overLay, 0.5, 0.5, overLay);
     cv.imshow(canvas1.current, overLay);    
   }
   return (
@@ -92,9 +97,10 @@ export default function Home() {
 
 
       <main className={styles.main}>
-      <canvas width="200" height="200" ref={canvas1} id="canvasOutput" ></canvas>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
+      {/* <canvas className={styles.resultImage} ref={canvas0} id="canvasOutput" ></canvas>     */}
+      <canvas className={styles.resultImage} ref={canvas1} id="canvasOutput" ></canvas>
+        <h1 className={styles.title}> 
+          {  progress!=0 ? <p>Progress{progress*100}%</p>:""}
         </h1>
         {cv ? <input onChange={fileChange} type="file" id="input"></input>:""}
       </main>
