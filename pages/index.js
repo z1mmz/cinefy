@@ -61,7 +61,7 @@ export default function Home() {
     var overLay = new cv.Mat();
     let ksize = new cv.Size(0, 0);
     cv.cvtColor(mat,overLay, cv.COLOR_RGBA2GRAY);
-    cv.threshold(overLay,overLay,230,255,cv.THRESH_BINARY);
+    cv.threshold(overLay,overLay,240,255,cv.THRESH_BINARY);
     cv.GaussianBlur(overLay,overLay,ksize,20,20,cv.BORDER_DEFAULT)
   
     cv.threshold(overLay,overLay,10,255,cv.THRESH_BINARY);
