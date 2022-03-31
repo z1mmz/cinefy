@@ -13,6 +13,7 @@
 }
 .resultImage{
   max-width: 75%;
+  max-height: 90%;
 }
 .footer {
   display: flex;

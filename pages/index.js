@@ -24,16 +24,18 @@ export default function Home() {
   }
   const fileChange = (e) =>{
     console.log(window)
-    const file = e.target.files[0];     
-    var fr = new FileReader();
-    fr.readAsDataURL(file);
-    
-    var img = img1.current
-    fr.onload = (evt) => {
-            if( evt.target.readyState === FileReader.DONE) {
-              img.src = evt.target.result;              
-            }
-    }
+    if(e.target.files.length>0){
+      const file = e.target.files[0];     
+      var fr = new FileReader();
+      fr.readAsDataURL(file);
+      
+      var img = img1.current
+      fr.onload = (evt) => {
+              if( evt.target.readyState === FileReader.DONE) {
+                img.src = evt.target.result;              
+              }
+      }
+  }
   }    
 
   function handleImageLoad() {
@@ -51,8 +53,6 @@ export default function Home() {
         console.log(e.data[1])
         var result = cv.matFromImageData(e.data[1])  
         cv.imshow(canvas1.current, result);  
-        // canvas0.current.getContext('2d').putImageData(e.data[1],0,0)
-        // cv.imshow(canvas1.current, cv.matFromImageData(e.data[1]));
       }
     }
   }

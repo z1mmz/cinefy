@@ -31,16 +31,17 @@ onmessage = function(e) {
     importScripts("https://docs.opencv.org/master/opencv.js")
     console.log('Message received from main script');
     console.log(e)
+    postMessage(["Loading...",""])
     cv["onRuntimeInitialized"] = () => {                                             
         var mat = cv.matFromImageData(e.data)
         var overLay = new cv.Mat();
         let ksize = new cv.Size(0, 0);
         cv.cvtColor(mat,overLay, cv.COLOR_RGBA2GRAY);
-        cv.threshold(overLay,overLay,240,255,cv.THRESH_BINARY);
+        cv.threshold(overLay,overLay,245,255,cv.THRESH_BINARY);
         cv.GaussianBlur(overLay,overLay,ksize,10,10,cv.BORDER_DEFAULT)
     
         cv.threshold(overLay,overLay,10,255,cv.THRESH_BINARY);
-        cv.GaussianBlur(overLay,overLay,ksize,10,10,cv.BORDER_DEFAULT)
+        cv.GaussianBlur(overLay,overLay,ksize,3,3,cv.BORDER_DEFAULT)
     
         cv.cvtColor(overLay,overLay,cv.COLOR_GRAY2RGBA)
         let row = 0 , col = 0
@@ -61,9 +62,7 @@ onmessage = function(e) {
         }
 
     }
-    //todo not loading image back properly, maybe its not even loading in properly
-        // cv.imshow(canvas0.current, overLay);    
-        cv.addWeighted(mat, 1, overLay, 0.5, 0.5, overLay);
+        cv.addWeighted(mat, 1, overLay, 0.5, 1, overLay);
         postMessage([100,imageDataFromMat(overLay)])
     };
 
