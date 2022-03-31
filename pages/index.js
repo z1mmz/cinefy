@@ -2,8 +2,10 @@ import Head from 'next/head'
 import Image from 'next/image'
 import styles from '../styles/Home.module.css'
 import Script from 'next/script'
-import { useRef,useState } from 'react'
 
+import { useRef,useState } from 'react'
+import { urlObjectKeys } from 'next/dist/shared/lib/utils'
+import {imageDataFromMat } from '../utils/imageEditor'
 
 export default function Home() {
   const img1 = useRef()
@@ -11,7 +13,7 @@ export default function Home() {
   const canvas1 = useRef()
   const [cv ,setCV] = useState()
   const [progress ,setProgress] = useState(0)
-
+ 
   const loadImg = () => {
     console.log("yay")
   
@@ -25,6 +27,7 @@ export default function Home() {
     const file = e.target.files[0];     
     var fr = new FileReader();
     fr.readAsDataURL(file);
+    
     var img = img1.current
     fr.onload = (evt) => {
             if( evt.target.readyState === FileReader.DONE) {
@@ -33,11 +36,25 @@ export default function Home() {
     }
   }    
 
-
   function handleImageLoad() {
+    var worker = new Worker("/worker.js")
     var img=img1.current
     img2canvas(img,canvas1.current)
     img.className = ""
+    var mat = cv.imread(img) 
+    cv.imshow(canvas1.current, mat);   
+    worker.postMessage(imageDataFromMat(mat))
+    worker.onmessage = function(e) {
+
+      setProgress(e.data[0])
+      if(e.data[1] != ""){
+        console.log(e.data[1])
+        var result = cv.matFromImageData(e.data[1])  
+        cv.imshow(canvas1.current, result);  
+        // canvas0.current.getContext('2d').putImageData(e.data[1],0,0)
+        // cv.imshow(canvas1.current, cv.matFromImageData(e.data[1]));
+      }
+    }
   }
 
   function img2canvas(img, canvas) {
@@ -45,62 +62,22 @@ export default function Home() {
     var ratioImage = img.naturalWidth / img.naturalHeight;
     var widthAdj = 400 //canvas.width;
     var heightAdj = Math.ceil(widthAdj / ratioImage)
-
     canvas.width = widthAdj //(img.width/2);
     canvas.height =heightAdj // (img.height/2);
-
     ctx.width = widthAdj + 'px'   //(img.width/2) + 'px';
     ctx.height = heightAdj + 'px'  //(img.height/2) + 'px';
-    ctx.drawImage(img, 0, 0, widthAdj, heightAdj);    
-    testOpenCv()
+    ctx.drawImage(img, 0, 0, widthAdj, heightAdj);   
+ 
   } 
 
-  function testOpenCv() {
-    var img = img1.current
-    var mat = cv.imread(img)  
-    var overLay = new cv.Mat();
-    let ksize = new cv.Size(0, 0);
-    cv.cvtColor(mat,overLay, cv.COLOR_RGBA2GRAY);
-    cv.threshold(overLay,overLay,240,255,cv.THRESH_BINARY);
-    cv.GaussianBlur(overLay,overLay,ksize,20,20,cv.BORDER_DEFAULT)
-  
-    cv.threshold(overLay,overLay,10,255,cv.THRESH_BINARY);
-    cv.GaussianBlur(overLay,overLay,ksize,20,20,cv.BORDER_DEFAULT)
-  
-    cv.cvtColor(overLay,overLay,cv.COLOR_GRAY2RGBA)
-    let row = 0 , col = 0
-    console.log(overLay.channels())
-    for(let r = 0 ; r < overLay.rows; r++){
-      console.log(r - overLay.rows)
-      setProgress(r/overLay.rows)
-      for(let c = 0; c< overLay.cols; c++){
-        row = r, col = c;
-        
-        if (overLay.isContinuous() ) {
-            overLay.data[row * overLay.cols * overLay.channels() + col * overLay.channels()] = overLay.data[row * overLay.cols * overLay.channels() + col * overLay.channels()]*1;
-            overLay.data[row * overLay.cols * overLay.channels() + col * overLay.channels() +1 ] = overLay.data[row * overLay.cols * overLay.channels() + col * overLay.channels()+1]*0.1;
-            overLay.data[row * overLay.cols * overLay.channels() + col * overLay.channels() +2 ] = overLay.data[row * overLay.cols * overLay.channels() + col * overLay.channels()+2]*0.1;
-            // overLay.data[row * overLay.cols * overLay.channels() + col * overLay.channels() +3 ] = overLay.data[row * overLay.cols * overLay.channels() + col * overLay.channels()+3]*0.5;
-            // overLay.data[row * overLay.cols * overLay.channels() + col * overLay.channels() +4 ] = overLay.data[row * overLay.cols * overLay.channels() + col * overLay.channels()+4]*0;
-        }
-    }
-
-  }
-
-    // cv.imshow(canvas0.current, overLay);    
-    cv.addWeighted(mat, 1, overLay, 0.5, 0.5, overLay);
-    cv.imshow(canvas1.current, overLay);    
-  }
   return (
     <div className={styles.container}>
       <Script src="https://docs.opencv.org/master/opencv.js" onLoad={loadOpenCV} />
-
-
       <main className={styles.main}>
-      {/* <canvas className={styles.resultImage} ref={canvas0} id="canvasOutput" ></canvas>     */}
+      <canvas className={styles.resultImage} ref={canvas0} id="canvasOutput" ></canvas>    
       <canvas className={styles.resultImage} ref={canvas1} id="canvasOutput" ></canvas>
         <h1 className={styles.title}> 
-          {  progress!=0 ? <p>Progress{progress*100}%</p>:""}
+          {  progress!=0 ? <p>Progress: {progress}%</p>:""}
         </h1>
         {cv ? <input onChange={fileChange} type="file" id="input"></input>:""}
       </main>
